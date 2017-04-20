@@ -2,6 +2,26 @@
 
 A bash script that helps in demos.
 
+Tired of having to type each command line during a demo? Tired of your typos?
+Tired of having to remember which command comes next?  This little script
+should help. Just `source` it in and then let the script do the typing for
+you - even showing each character at a time if you want so it gives the visual
+effect of typing. It'll:
+- pause before and after each command, giving you time to explain what will
+happen, and what did happen
+- show each command in bold so it stands out
+- automatically `more` the output of commands so you don't have to scroll
+back up when there's a lot of output from a command
+- works well with a presentation clicker - meaning you don't need to be near
+your laptop to run through the steps of the demo - pace around the stage
+all you want
+- supports `wait`ing for the state of the system to be ready before
+moving on to the next step
+- supports running in `SAVED` mode so you can run the demo and use a previous
+run's output - great for poor wifi situations
+- supports running commands that require stdin - and yes you can
+specify that stdin if you wish
+
 See `sample.sh` for an example of how it works.  Last example in there requires
 docker to be installed.
 
@@ -13,7 +33,8 @@ To simulate typing speeds.
 - `SAVE` : Save the output from each command in `script.tar` for later replay.
 "script" is replaced with the name of the bash file that `source`d `demoscript`
 - `USESAVED` : Use the saved output in the tar file instead of running each
-command. This is good for off-line demos.
+command. This is good for off-line demos. But, keep in mind that since it
+doesn't actually the the command it doesn't change the state of anything.
 
 ## Demoing
 
