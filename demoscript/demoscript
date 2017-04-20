@@ -47,13 +47,11 @@ function slowTty() {
 
 function readChar() {
 	read -s -n 1 ch
-	if [[ "$ch" == "f" ]]; then
-		delay="0"
-	elif [[ "$ch" == "s" ]]; then
-		delay="0.05"
-	elif [[ "$ch" == "r" ]]; then
-		skip="x"
-	fi
+	case "$ch" in
+		"f" ) delay="0" ;;
+		"s" ) delay=${DELAY:-"0.02"} ;;
+		"r" ) skip="x" ;;
+	esac
 }
 
 function pause() {
@@ -80,18 +78,12 @@ function doit() {
 		opt="$1"
 		shift
 
-		if [[ "$opt" == "--ignorerc" ]]; then
-			ignorerc="1"
-		fi
-		if [[ "$opt" == "--shouldfail" ]]; then
-			shouldfail="1"
-		fi
-		if [[ "$opt" == "--noexec" ]]; then
-			noexec="1"
-		fi
-		if [[ "$opt" == "--usesaved" ]]; then
-			fakeit="1"
-		fi
+		case "$opt" in
+			"--ignorerc"   ) ignorerc="1"   ;;
+			"--shouldfail" ) shouldfail="1" ;;
+			"--noexec"     ) noexec="1"     ;;
+			"--usesaved"   ) fakeit="1"     ;;
+		esac
 	done
 
 	set +e
@@ -114,14 +106,13 @@ function doit() {
 	if [[ "$noexec" == "" ]]; then
 		if [[ "$fakeit" == "" ]]; then
 			# Run the cmd
-			# sh -c " $* " &> out
 			bash -c " $* " |& tee out | ${moreCMD[@]}
-			# rc=$?
 			rc=${PIPESTATUS[0]}
 
 			# Save the output if we're asked to
 			if [[ "$save" != "" ]]; then
 				cp out "${saveFile}"
+				tar --delete -f "${saveTar}" "${saveFile}" > /dev/null 2>&1 || true
 				tar -uf "${saveTar}" "${saveFile}"
 				rm "${saveFile}"
 			fi
@@ -159,12 +150,6 @@ function doit() {
 		rc=0
 	fi
 
-	# if [[ "$skip" == "" ]]; then
-	  # more -$lines out
-	# else
-	  # cat out
-	# fi
-
 	echo
 	[[ "$ignorerc" == "" && "$rc" != "0" ]] && echo "Non-zero exit code" && exit 1
 	[[ "$shouldfail" != "" && "$rc" == "0" ]] && echo "Expected non-zero exit code" && exit 1
@@ -187,12 +172,10 @@ function ttyDoit() {
 		opt="$1"
 		shift
 
-		if [[ "$opt" == "--ignorerc" ]]; then
-			ignorerc="1"
-		fi
-		if [[ "$opt" == "--shouldfail" ]]; then
-			shouldfail="1"
-		fi
+		case "$opt" in
+			"--ignorerc"   ) ignorerc="1"   ;;
+			"--shouldfail" ) shouldfail="1" ;;
+		esac
 	done
 
     echo -n $bold"$"$normal" "
@@ -243,12 +226,10 @@ function comment() {
 		opt="$1"
 		shift
 
-		if [[ "$opt" == "--nolf" ]]; then
-			noLF=""
-			echoopt="-n"
-		elif [[ "$opt" == "--pause" ]]; then
-		    dopause="1"
-		fi
+		case "$opt" in
+			"--nolf"  ) LF="" ;;
+			"--pause" ) dopause="1" ;;
+		esac
 	done
 	echo -en $bold\#" "$normal
 	if [[ "$dopause" == "1" ]]; then
