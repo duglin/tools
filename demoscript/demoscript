@@ -151,8 +151,24 @@ function doit() {
 	fi
 
 	echo
-	[[ "$ignorerc" == "" && "$rc" != "0" ]] && echo "Non-zero exit code" && exit 1
-	[[ "$shouldfail" != "" && "$rc" == "0" ]] && echo "Expected non-zero exit code" && exit 1
+
+	if [[ "$ignorerc" == "" ]]; then
+		# We're not totally ignoring the exit code
+		if [[ "$shouldfail" != "" ]]; then
+			# We need to make sure the command failed as expected
+			if [[ "$rc" == "0" ]]; then
+				echo "Expected non-zero exit code, got: $rc"
+				exit 1
+			fi
+		else
+			# Normal non-zero exit code expected case
+			if [[ "$rc" != "0" ]]; then
+				echo "Non-zero exit code: $rc"
+				exit 1
+			fi
+		fi
+	fi
+
 	set -e
 }
 
