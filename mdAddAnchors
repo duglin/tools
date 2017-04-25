@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# This script will read a markdown file from stdin and will add an html
+# anchor tag to each header it sees, and send the result back to stdout.
+
+IFS=''
+while read -r line ; do
+    if echo "$line" | grep "^[[:space:]]*#\+[[:space:]]\+[^#]\+$" > /dev/null 2>&1 ; then
+        # get everything before the heading text
+        lead=$(echo "${line}" | sed "s/\([[:space:]]*##*[[:space:]]\+\).*/\1/")
+        # get the heading text
+        rest=$(echo "${line}" | sed "s/\([[:space:]]*##*[[:space:]]\+\)\(.*\)/\2/")
+        # convert the heading into a markdown anchor
+        # - remove trailing spaces
+        # - convert upper to lower case
+        # - remove all punct
+        # - convert all spaces to -'s
+        ref=$(echo -n "${rest}" | \
+                sed "s/[[:space:]]*$//g" | \
+                tr "[:upper:]" "[:lower:]" | \
+                sed "s/[[:punct:]]*//g" | \
+                tr "[:space:]" "-")
+        # now add the anchor to the line and print it
+        echo "${lead} <a id='${ref}'></a> ${rest}"
+    else
+        # not a header so just print it
+        echo "${line}"
+    fi
+done
