@@ -35,6 +35,8 @@ To simulate typing speeds.
 - `USESAVED` : Use the saved output in the tar file instead of running each
 command. This is good for off-line demos. But, keep in mind that since it
 doesn't actually the the command it doesn't change the state of anything.
+Which means it might not work properly if the a command requires a previous
+command to change something in the system - that change will not be there.
 
 ## Demoing
 

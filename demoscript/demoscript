@@ -13,10 +13,6 @@ saveTar=$(cd $(dirname "$0");pwd)/${scriptName}.tar
 recover="$RECOVER"
 useSaved="$USESAVED"
 
-if [[ "$(uname)" == Darwin ]]; then
-	scriptOpts="-q -a /dev/null"
-fi
-
 if [[ "${useSaved}" != "" && ! -e "${saveTar}" ]]; then
 	echo "Missing saved output file: ${saveTar}"
 	exit 1
@@ -27,7 +23,6 @@ if [[ "${save}" != "" ]]; then
 fi
 
 function myscript() {
-scriptOpts="-efq -a /dev/null -c"
     if [[ "$(uname)" == Darwin ]]; then
     	script -q -a /dev/null $*
     else
@@ -86,6 +81,7 @@ function doit() {
 	local shouldfail=""
 	local noexec=""
 	local fakeit=""
+	local noscroll=""
 
 	if [[ "$useSaved" != "" ]]; then
 		fakeit="1"
@@ -100,6 +96,7 @@ function doit() {
 			"--shouldfail" ) shouldfail="1" ;;
 			"--noexec"     ) noexec="1"     ;;
 			"--usesaved"   ) fakeit="1"     ;;
+			"--noscroll"   ) noscroll="1"   ;;
 		esac
 	done
 
@@ -115,7 +112,7 @@ function doit() {
 	local lines=$(tput lines)
 	let lines=lines-3
 	moreCMD="more -$lines"
-	if [[ "$skip" != "" ]]; then
+	if [[ "$skip" != "" || "$noscroll" != "" ]]; then
 		moreCMD="cat"
 	fi
 
