@@ -14,6 +14,7 @@ dd=$(sed "s/.........$//" < out)
 doit echo The date w/o the year: $dd
 
 comment Run a command that expects some input
+doit docker pull ubuntu
 doit docker run -d ubuntu sleep 60
 cID=$(cat out)
 ttyDoit docker exec -ti $cID bash 10<<EOF
