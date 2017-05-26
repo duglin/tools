@@ -81,7 +81,7 @@ function doit() {
 	local shouldfail=""
 	local noexec=""
 	local fakeit=""
-	local noscroll=""
+	local noscroll=${NOSCROLL:-}
 
 	if [[ "$useSaved" != "" ]]; then
 		fakeit="1"
@@ -97,6 +97,7 @@ function doit() {
 			"--noexec"     ) noexec="1"     ;;
 			"--usesaved"   ) fakeit="1"     ;;
 			"--noscroll"   ) noscroll="1"   ;;
+			"--scroll"     ) noscroll=""    ;;
 		esac
 	done
 
