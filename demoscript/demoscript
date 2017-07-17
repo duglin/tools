@@ -2,6 +2,7 @@
 # SKIP=1      Do not wait for user to press a key to continue
 # RECOVER=1   Use the canned output when a command fails
 # USESAVED=1  Use canned output instead of running the commands
+# USESAVED=2  Use canned output IFF it exists, otherwise run it
 
 scriptName="${0##.*/}"
 bold=$(tput bold)
@@ -13,12 +14,12 @@ saveTar=$(cd $(dirname "$0");pwd)/${scriptName}.tar
 recover="$RECOVER"
 useSaved="$USESAVED"
 
-if [[ "${useSaved}" != "" && ! -e "${saveTar}" ]]; then
+if [[ "${useSaved}" != "" && "${useSaved}" != "2" && ! -e "${saveTar}" ]]; then
 	echo "Missing saved output file: ${saveTar}"
 	exit 1
 fi
 
-if [[ "${save}" != "" ]]; then
+if [[ "${save}" != "" && "${useSaved}" == "" ]]; then
 	rm -f "${saveTar}"
 fi
 
@@ -60,9 +61,9 @@ function slowTty() {
 function readChar() {
 	read -s -n 1 ch
 	case "$ch" in
-		"f" ) delay="0" ;;
-		"s" ) delay=${DELAY:-"0.02"} ;;
-		"r" ) skip="x" ;;
+		f ) delay="0" ;;
+		s ) delay=${DELAY:-"0.02"} ;;
+		r ) skip="x" ;;
 	esac
 }
 
@@ -80,24 +81,22 @@ function doit() {
 	local ignorerc=""
 	local shouldfail=""
 	local noexec=""
-	local fakeit=""
+	local fakeit=${useSaved:-}
 	local noscroll=${NOSCROLL:-}
-
-	if [[ "$useSaved" != "" ]]; then
-		fakeit="1"
-	fi
+	local postcmd=""
 
 	while [[ "$1" == "--"* ]]; do
 		opt="$1"
 		shift
 
 		case "$opt" in
-			"--ignorerc"   ) ignorerc="1"   ;;
-			"--shouldfail" ) shouldfail="1" ;;
-			"--noexec"     ) noexec="1"     ;;
-			"--usesaved"   ) fakeit="1"     ;;
-			"--noscroll"   ) noscroll="1"   ;;
-			"--scroll"     ) noscroll=""    ;;
+			--ignorerc   ) ignorerc="1"   ;;
+			--shouldfail ) shouldfail="1" ;;
+			--noexec     ) noexec="1"     ;;
+			--usesaved   ) fakeit="1"     ;;
+			--noscroll   ) noscroll="1"   ;;
+			--scroll     ) noscroll=""    ;;
+			--post*      ) postcmd="${opt#*=}" ;;
 		esac
 	done
 
@@ -116,12 +115,38 @@ function doit() {
 	if [[ "$skip" != "" || "$noscroll" != "" ]]; then
 		moreCMD="cat"
 	fi
+	if [[ "$postcmd" != "" ]]; then
+		moreCMD="$postcmd | $moreCMD"
+	fi
 
 	# Unless we're told to not execute it, do it
 	if [[ "$noexec" == "" ]]; then
+		if [[ "$fakeit" != "" ]]; then
+			# Faking it!
+			if tar -xf "${saveTar}" "${saveFile}" > /dev/null 2>&1; then
+			    # echo "** Using saved output ${saveFile} **"
+				cp "${saveFile}" out
+				rm "${saveFile}"
+				cat out | eval ${moreCMD[@]}
+			
+				if [[ "$shouldfail" == "" ]]; then
+					rc=0
+				else
+					rc=1
+				fi
+			else
+				if [[ "$fakeit" == "2" ]]; then
+					# file doesn't exist so just try to run it instead
+					fakeit=""
+				else
+					echo -n > out
+				fi
+			fi
+		fi
+
 		if [[ "$fakeit" == "" ]]; then
 			# Run the cmd
-			bash -c " $* " 2>&1 | tee out | ${moreCMD[@]}
+			bash -c " $* " 2>&1 | tee out | eval ${moreCMD[@]}
 			rc=${PIPESTATUS[0]}
 
 			# Save the output if we're asked to
@@ -130,21 +155,6 @@ function doit() {
 				# tar --delete -f "${saveTar}" "${saveFile}" > /dev/null 2>&1 || true
 				tar -rf "${saveTar}" "${saveFile}"
 				rm "${saveFile}"
-			fi
-		else
-			# Faking it!
-			if tar -xf "${saveTar}" "${saveFile}" > /dev/null 2>&1; then
-			    # echo "** Using saved output ${saveFile} **"
-				cp "${saveFile}" out
-				rm "${saveFile}"
-				${moreCMD[@]} out
-			else
-				echo -n > out
-			fi
-			if [[ "$shouldfail" == "" ]]; then
-				rc=0
-			else
-				rc=1
 			fi
 		fi
 
@@ -204,8 +214,8 @@ function ttyDoit() {
 		shift
 
 		case "$opt" in
-			"--ignorerc"   ) ignorerc="1"   ;;
-			"--shouldfail" ) shouldfail="1" ;;
+			--ignorerc   ) ignorerc="1"   ;;
+			--shouldfail ) shouldfail="1" ;;
 		esac
 	done
 
@@ -258,8 +268,8 @@ function comment() {
 		shift
 
 		case "$opt" in
-			"--nolf"  ) LF="" ;;
-			"--pause" ) dopause="1" ;;
+			--nolf  ) LF="" ;;
+			--pause ) dopause="1" ;;
 		esac
 	done
 	echo -en $bold\#" "$normal
@@ -297,9 +307,13 @@ function scroll() {
 	let lines=lines-3
 
 	echo -n $bold"$"$normal" "
-	set +e
+	# set +e
 	pause
-	slowType more $*
+	if [[ "$skip" == "" ]]; then
+	  slowType more $*
+	else
+	  slowType cat $*
+	fi
 	pause
 	echo
 	if [[ "$skip" == "" ]]; then
