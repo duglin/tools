@@ -107,7 +107,7 @@ Type some text: <b>input line 1</b>
 And some more: <b>input line 2</b>
 </pre>
 
-### `command SOME-TEXT`
+### `comment SOME-TEXT`
 Prints a comment to the screen, prefixed by `#`.
 - Pauses after the `#` only if `--pause` if specified
 - Pauses after the text only if `--pause` if specified
