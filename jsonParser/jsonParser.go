@@ -10,8 +10,19 @@ import (
 )
 
 func Unmarshal(jsonStr []byte, obj interface{}) error {
+	objValue := reflect.ValueOf(obj)
+
+	// If its a pointer, dereference it so we can check its real type
+	if objValue.Type().Kind() == reflect.Ptr {
+		objValue = objValue.Elem()
+	}
+
+	// If its not a struct then just do normal JSON parsing
+	if objValue.Type().Kind() != reflect.Struct {
+		return json.Unmarshal(jsonStr, obj)
+	}
+
 	rawMap := map[string]json.RawMessage{}
-	objValue := reflect.ValueOf(obj).Elem()
 	knownFields := map[string]reflect.Value{}
 	var extensions map[string]interface{} = nil
 
@@ -58,11 +69,6 @@ func Unmarshal(jsonStr []byte, obj interface{}) error {
 		knownFields[strings.ToLower(jsonName)] = objValue.Field(i)
 	}
 
-	// If there is no extension property, then just use the default parser
-	if extensions == nil {
-		return json.Unmarshal(jsonStr, obj)
-	}
-
 	// Lazy parse the json
 	if err := json.Unmarshal(jsonStr, &rawMap); err != nil {
 		return err
@@ -72,14 +78,14 @@ func Unmarshal(jsonStr []byte, obj interface{}) error {
 	for key, val := range rawMap {
 		if field, found := knownFields[strings.ToLower(key)]; found {
 			// Found a normal property, so parse it
-			err := json.Unmarshal(val, field.Addr().Interface())
+			err := Unmarshal(val, field.Addr().Interface())
 			if err != nil {
 				return err
 			}
-		} else {
-			// Unknown property, save it in our extension property
+		} else if extensions != nil {
+			// Unknown, save it in our extension property, if we have one
 			var v interface{}
-			if err := json.Unmarshal(val, &v); err != nil {
+			if err := Unmarshal(val, &v); err != nil {
 				return err
 			}
 			extensions[key] = v
@@ -90,16 +96,30 @@ func Unmarshal(jsonStr []byte, obj interface{}) error {
 
 func main() {
 	myJson := `
-    { "f1": "value1",
+	{ "f1": "value1",
 	  "f2": "value2",
-	  "F3": "value3",
+	  "F3": 42,
+	  "yyy": "xxx",
+	  "nested": {
+		"n1": "nn1",
+		"n2": "nn2",
+		"nn": 99,
+		"ee": "more"
+	  },
 	  "xxx": { "yyy": 1 }
 	}`
 
 	v := struct {
 		F1     string `json:"f1"`
 		F2     string
-		f3     string
+		F3     int
+		Nested struct {
+			N1      string
+			N2      string
+			NN      int
+			EExtras map[string]interface{} `json:",exts"`
+			// Eextras map[string]interface{} `json:",exts"`
+		}
 		Extras map[string]interface{} `json:",exts"`
 		// Eextras map[string]interface{} `json:",exts"`
 	}{}
@@ -109,5 +129,6 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("%#v\n", v)
+	b, _ := json.MarshalIndent(v, "", "  ")
+	fmt.Printf("Original:\n%v\n\nParsed:\n%v\n", myJson, string(b))
 }
