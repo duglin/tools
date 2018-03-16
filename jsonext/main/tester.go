@@ -46,6 +46,9 @@ func main() {
 	b, err := json.MarshalIndent(v, "", "  ")
 	fmt.Printf("Original:\n%v\n\nParsed(%s):\n%v\n", myJson, err, string(b))
 
+	b, err = jsonext.Marshal(v)
+	fmt.Printf("\nAs Ext No Indent(%s):\n%v\n", err, string(b))
+
 	b, err = jsonext.MarshalIndent(v, "", "  ")
 	fmt.Printf("\nAs Ext(%s):\n%v\n", err, string(b))
 }
