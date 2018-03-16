@@ -2,7 +2,7 @@ all: build test
 
 build: tester
 
-tester: main/tester.go
+tester: main/tester.go jsonext.go
 	go build -o tester main/tester.go
 
 test: tester

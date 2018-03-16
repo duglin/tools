@@ -20,7 +20,7 @@ func main() {
 		"nn": 99,
 		"ee": "more"
 	  },
-	  "xxx": { "yyy": 1 }
+	  "xxx": { "yyy": 1 , "zzz": "zoom"}
 	}`
 
 	v := struct {
@@ -43,6 +43,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	b, _ := json.MarshalIndent(v, "", "  ")
-	fmt.Printf("Original:\n%v\n\nParsed:\n%v\n", myJson, string(b))
+	b, err := json.MarshalIndent(v, "", "  ")
+	fmt.Printf("Original:\n%v\n\nParsed(%s):\n%v\n", myJson, err, string(b))
+
+	b, err = jsonext.MarshalIndent(v, "", "  ")
+	fmt.Printf("\nAs Ext(%s):\n%v\n", err, string(b))
 }
