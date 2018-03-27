@@ -8,19 +8,19 @@ should help. Just `source` it in and then let the script do the typing for
 you - even showing each character at a time if you want so it gives the visual
 effect of typing. It'll:
 - pause before and after each command, giving you time to explain what will
-happen, and what did happen
+  happen, and what did happen
 - show each command in bold so it stands out
 - automatically `more` the output of commands so you don't have to scroll
-back up when there's a lot of output from a command
+  back up when there's a lot of output from a command
 - works well with a presentation clicker - meaning you don't need to be near
-your laptop to run through the steps of the demo - pace around the stage
-all you want
+  your laptop to run through the steps of the demo - pace around the stage
+  all you want
 - supports `wait`ing for the state of the system to be ready before
-moving on to the next step
+  moving on to the next step
 - supports running in `SAVED` mode so you can run the demo and use a previous
-run's output - great for poor wifi situations
+  run's output - great for poor wifi situations
 - supports running commands that require stdin - and yes you can
-specify that stdin if you wish
+  specify that stdin if you wish
 
 See `sample.sh` for an example of how it works.  Last example in there requires
 docker to be installed.
@@ -29,14 +29,15 @@ docker to be installed.
 
 Set this environment variable to influence things...
 - `DELAY` : Time to pause between each character displayed of command (0.02).
-To simulate typing speeds.
+  To simulate typing speeds.
 - `SAVE` : Save the output from each command in `script.tar` for later replay.
-"script" is replaced with the name of the bash file that `source`d `demoscript`
+  "script" is replaced with the name of the bash file that `source`d
+  `demoscript`
 - `USESAVED` : Use the saved output in the tar file instead of running each
-command. This is good for off-line demos. But, keep in mind that since it
-doesn't actually the the command it doesn't change the state of anything.
-Which means it might not work properly if the a command requires a previous
-command to change something in the system - that change will not be there.
+  command. This is good for off-line demos. But, keep in mind that since it
+  doesn't actually the the command it doesn't change the state of anything.
+  Which means it might not work properly if the a command requires a previous
+  command to change something in the system - that change will not be there.
 
 ## Demoing
 
@@ -55,7 +56,9 @@ Runs a command.
 - Pauses after showing the command
 - Shows the command in bold
 - Sends the output of the command through `more` - screen side is reduced by 3
-- Output of command (both stdout and stderr) are sent to a file called `out`
+- Output of command (both stdout and stderr) are sent to a file called `out`.
+  This file is erased when the bash script being executed exits.
+- A list of the commands executed will be saved in a file called `cmds`.
 - Script stops on non-zero exit code
 
 Options:
@@ -109,8 +112,12 @@ And some more: <b>input line 2</b>
 
 ### `comment SOME-TEXT`
 Prints a comment to the screen, prefixed by `#`.
-- Pauses after the `#` only if `--pause` if specified
-- Pauses after the text only if `--pause` if specified
+- Will not show the `#` if `--nohash` is specified
+- Pauses after the `#` if `--pause` is specified
+- Pauses after the text if `--pause` is specified
+- Pauses only after the text if `--pauseafter` is specified
+- `--nolf` will not print the blank line after the comment
+- `--nocr` will not print the blank line or CR after the comment
 - Shows the comment in bold
 
 Options:

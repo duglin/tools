@@ -14,6 +14,12 @@ saveTar=$(cd $(dirname "$0");pwd)/${scriptName}.tar
 recover="$RECOVER"
 useSaved="$USESAVED"
 
+trap clean EXIT
+
+function clean {
+	rm -f out
+}
+
 if [[ "${useSaved}" != "" && "${useSaved}" != "2" && ! -e "${saveTar}" ]]; then
 	echo "Missing saved output file: ${saveTar}"
 	exit 1
@@ -260,8 +266,11 @@ function ttyDoit() {
 
 function comment() {
 	local LF="\\n"
+	local CR=${LF}
 	local echoopt=""
 	local dopause=""
+	local dopauseafter=""
+	local nohash=""
 
 	while [[ "$1" == "--"* ]]; do
 		opt="$1"
@@ -269,18 +278,23 @@ function comment() {
 
 		case "$opt" in
 			--nolf  ) LF="" ;;
-			--pause ) dopause="1" ;;
+			--nocr  ) CR="" ; LF="" ;;
+			--pause ) dopause="1" ; dopauseafter="1" ;;
+			--pauseafter ) dopauseafter="1" ;;
+			--nohash ) nohash="1" ;;
 		esac
 	done
-	echo -en $bold\#" "$normal
+	if [[ "$nohash" == "" ]]; then
+	    echo -en $bold\#" "$normal
+    fi
 	if [[ "$dopause" == "1" ]]; then
 		pause
 	fi
-	echo -en ${echoopt} $bold$*$normal
-	if [[ "$dopause" == "1" ]]; then
+	echo -en ${echoopt} "$bold$*$normal"
+	if [[ "$dopause" == "1" || "$dopauseafter" == "1" ]]; then
 		pause
 	fi
-	echo -e ${echoopt} "${LF}"
+	echo -en ${echoopt} "${CR}${LF}"
 }
 
 # Wait until the passed in cmd returns true
