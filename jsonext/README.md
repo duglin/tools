@@ -23,3 +23,17 @@ struct {
   }
 }
 ```
+
+To access a property that might be defined in your struct or within an
+extension (meaning, be forwards and backward compatible), use:
+```
+	StructGet(structValue, key)
+```
+For example:
+```
+	address, err := jsonext.StructGet( person, "address" )
+```
+will find `address` whether it ends up being defined as a sibling to
+`Name` or ends up being parsed into `Extras`.
+
+See: [`future/future.go`](future/future.go) for a full example of how to use it.

@@ -1,12 +1,9 @@
-all: build test
+all: test
 
-build: tester
-
-tester: main/tester.go jsonext.go
-	go build -o tester main/tester.go
-
-test: tester
-	./tester
+test:
+	go run tester/tester.go
+	# Make sure our sample future-proof example works
+	go run future/future.go
 
 clean:
 	rm -f tester

@@ -9,9 +9,7 @@ import (
 	"unicode"
 )
 
-/* Note will not work for cases where the ext is in struct that is in a
-   non-struct top level thing - e.g. a struct in a map */
-func Marshal(obj interface{}) ([]byte, error) {
+func Obj2Map(obj interface{}) (interface{}, error) {
 	objValue := reflect.ValueOf(obj)
 
 	// If its a pointer, dereference it so we can check its real type
@@ -19,12 +17,12 @@ func Marshal(obj interface{}) ([]byte, error) {
 		objValue = objValue.Elem()
 	}
 
-	// If its not a struct then just do normal JSON parsing
+	// If its not a struct then error
 	if objValue.Type().Kind() != reflect.Struct {
-		return json.Marshal(obj)
+		return obj, nil
 	}
 
-	rawMap := map[string]json.RawMessage{}
+	rawMap := map[string]interface{}{}
 
 	// Look for the "extension" property
 	for i := 0; i != objValue.NumField(); i++ {
@@ -36,7 +34,7 @@ func Marshal(obj interface{}) ([]byte, error) {
 		}
 
 		jsonName := strings.Split(field.Tag.Get("json"), ",")[0]
-		// If not custom name, then just use the property name itself
+		// If no custom name, then just use the property name itself
 		if jsonName == "" {
 			jsonName = field.Name
 		}
@@ -44,7 +42,7 @@ func Marshal(obj interface{}) ([]byte, error) {
 		// For each extension in the map, make it a top-level property
 		// in the map we're constructing
 		if strings.Contains(field.Tag.Get("json"), ",exts") {
-			// Just to make the next line shorter
+			// Just to make the next line is shorter
 			newV := reflect.ValueOf(map[string]interface{}{})
 
 			// Verify/convert the extension property to the correct type
@@ -59,21 +57,111 @@ func Marshal(obj interface{}) ([]byte, error) {
 
 			// Now grab each map entry's JSON
 			for k, v := range exts {
-				b, err := Marshal(v)
+				v, err := Obj2Map(v)
 				if err != nil {
 					return nil, err
 				}
-				rawMap[k] = b
+				rawMap[k] = v
 			}
 
 		} else {
-			b, err := Marshal(objValue.Field(i).Interface())
+			v, err := Obj2Map(objValue.Field(i).Interface())
 			if err != nil {
 				return nil, err
 			}
-			rawMap[jsonName] = b
+			rawMap[jsonName] = v
 		}
 	}
+	return rawMap, nil
+}
+
+func StructGet(obj interface{}, key string) (interface{}, error) {
+	newObj, err := Obj2Map(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	newMap, _ := newObj.(map[string]interface{})
+
+	v, ok := newMap[key]
+	if !ok {
+		return nil, fmt.Errorf("Not found")
+	}
+	return v, nil
+}
+
+/* Note will not work for cases where the ext is in a struct that is in a
+   non-struct top level thing - e.g. a struct in a map */
+func Marshal(obj interface{}) ([]byte, error) {
+	objValue := reflect.ValueOf(obj)
+
+	// If its a pointer, dereference it so we can check its real type
+	if objValue.Type().Kind() == reflect.Ptr {
+		objValue = objValue.Elem()
+	}
+
+	// If its not a struct then just do normal JSON parsing
+	if objValue.Type().Kind() != reflect.Struct {
+		return json.Marshal(obj)
+	}
+
+	rawMap, err := Obj2Map(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	/*
+		rawMap := map[string]json.RawMessage{}
+
+		// Look for the "extension" property
+		for i := 0; i != objValue.NumField(); i++ {
+			field := objValue.Type().Field(i)
+
+			// Skip non-exported properties
+			if unicode.IsLower(rune(field.Name[0])) {
+				continue
+			}
+
+			jsonName := strings.Split(field.Tag.Get("json"), ",")[0]
+			// If no custom name, then just use the property name itself
+			if jsonName == "" {
+				jsonName = field.Name
+			}
+
+			// For each extension in the map, make it a top-level property
+			// in the map we're constructing
+			if strings.Contains(field.Tag.Get("json"), ",exts") {
+				// Just to make the next line is shorter
+				newV := reflect.ValueOf(map[string]interface{}{})
+
+				// Verify/convert the extension property to the correct type
+				exts, ok := objValue.Field(i).Interface().(map[string]interface{})
+				if !ok {
+					return nil,
+						fmt.Errorf("JSON Extension field %q must be a %s not %s",
+							objValue.Type().Field(i).Name,
+							newV.Type().String(),
+							objValue.Field(i).Type().String())
+				}
+
+				// Now grab each map entry's JSON
+				for k, v := range exts {
+					b, err := Marshal(v)
+					if err != nil {
+						return nil, err
+					}
+					rawMap[k] = b
+				}
+
+			} else {
+				b, err := Marshal(objValue.Field(i).Interface())
+				if err != nil {
+					return nil, err
+				}
+				rawMap[jsonName] = b
+			}
+		}
+	*/
 
 	return json.Marshal(rawMap)
 }
