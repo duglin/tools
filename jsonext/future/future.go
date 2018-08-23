@@ -44,4 +44,12 @@ func main() {
 		fmt.Printf("Something went really wrong!\n")
 		os.Exit(1)
 	}
+
+	// All known properties can still be accessed via normal dot(.) notation.
+	// So the use of StructGet is only needed for knowns/extensions IFF
+	// you want to be forwards compatible. Obviously, you can also just
+	// access them via person.Extras if you want.
+	fmt.Printf("Name1: %s\n", personv1.Name)
+	fmt.Printf("Name2: %s\n", personv2.Name)
+
 }
