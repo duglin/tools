@@ -65,12 +65,22 @@ function slowTty() {
 }
 
 function readChar() {
-	read -s -n 1 ch
-	case "$ch" in
-		f ) delay="0" ;;
-		s ) delay=${DELAY:-"0.02"} ;;
-		r ) skip="x" ;;
-	esac
+    read -s -n 1 ch
+    # deal with escape sequences
+    # ESC[5~   and  ESC[6~   are for a mac's page up/down
+    case "$ch" in
+        ) read -s -n 1 ch
+            if [[ "$ch" == "[" ]]; then
+                read -s -n 1 ch
+                if [[ "$ch" == "5" || "$ch" == "6" ]]; then
+                  read -s -n 1 ch     # should be ~
+                fi
+            fi
+            ;;
+        f ) delay="0" ;;
+        s ) delay=${DELAY:-"0.02"} ;;
+        r ) skip="x" ;;
+    esac
 }
 
 function pause() {
