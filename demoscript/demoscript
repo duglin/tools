@@ -100,22 +100,25 @@ function doit() {
 	local fakeit=${useSaved:-}
 	local noscroll=${NOSCROLL:-}
 	local postcmd=""
+	local retryonfail=${RETRYONFAIL:-}
 
 	while [[ "$1" == "--"* ]]; do
 		opt="$1"
 		shift
 
 		case "$opt" in
-			--ignorerc   ) ignorerc="1"   ;;
-			--shouldfail ) shouldfail="1" ;;
-			--noexec     ) noexec="1"     ;;
-			--usesaved   ) fakeit="1"     ;;
-			--noscroll   ) noscroll="1"   ;;
-			--scroll     ) noscroll=""    ;;
-			--post*      ) postcmd="${opt#*=}" ;;
+			--ignorerc    ) ignorerc="1"    ;;
+			--shouldfail  ) shouldfail="1"  ;;
+			--noexec      ) noexec="1"      ;;
+			--usesaved    ) fakeit="1"      ;;
+			--noscroll    ) noscroll="1"    ;;
+			--scroll      ) noscroll=""     ;;
+			--retryonfail ) retryonfail="1" ;;
+			--post*       ) postcmd="${opt#*=}" ;;
 		esac
 	done
 
+  while true ; do
 	set +e
 	echo -n $bold"$"$normal" "
 	pause
@@ -193,24 +196,37 @@ function doit() {
 
 	echo
 
+	errorMsg=""
+
 	if [[ "$ignorerc" == "" ]]; then
 		# We're not totally ignoring the exit code
 		if [[ "$shouldfail" != "" ]]; then
 			# We need to make sure the command failed as expected
 			if [[ "$rc" == "0" ]]; then
-				echo "Expected non-zero exit code, got: $rc"
-				exit 1
+				errorMsg="Expected non-zero exit code, got: $rc"
 			fi
 		else
 			# Normal non-zero exit code expected case
 			if [[ "$rc" != "0" ]]; then
-				echo "Non-zero exit code: $rc"
-				exit 1
+				errorMsg="Non-zero exit code: $rc"
 			fi
 		fi
 	fi
 
 	set -e
+
+    if [[ "${errorMsg}" != "" ]]; then
+	  if [[ "${retryonfail}" != "" ]]; then
+	    echo ${errorMsg}. Retrying
+		continue
+	  fi
+  	  echo ${errorMsg}
+	  exit 1
+    fi
+
+	break
+
+  done
 }
 
 function background() {

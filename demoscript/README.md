@@ -38,6 +38,7 @@ Set this environment variable to influence things...
   doesn't actually the the command it doesn't change the state of anything.
   Which means it might not work properly if the a command requires a previous
   command to change something in the system - that change will not be there.
+- `RETRYONFAIL` : Retry all `doit` commands that have unexcepted exit code.
 
 ## Demoing
 
@@ -59,13 +60,14 @@ Runs a command.
 - Output of command (both stdout and stderr) are sent to a file called `out`.
   This file is erased when the bash script being executed exits.
 - A list of the commands executed will be saved in a file called `cmds`.
-- Script stops on non-zero exit code
+- Script stops on unexcepted exit code
 
 Options:
 - `--ignorerc` : Ignores the exit code, even if it's non-zero
 - `--shouldfail` : Script stops running on zero exit code
 - `--noexec` : Don't actually execute the command, just show the command.
 - `--usesaved` : Use the saved output (in the tar file) for just this one
+- `--retryonfail` : Retry the command if there are unexpected results
 command.
 
 Example: `doit echo hello world`
