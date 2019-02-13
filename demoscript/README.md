@@ -68,7 +68,15 @@ Options:
 - `--noexec` : Don't actually execute the command, just show the command.
 - `--usesaved` : Use the saved output (in the tar file) for just this one
 - `--retryonfail` : Retry the command if there are unexpected results
-command.
+- `--untilgrep=xx` : Run the command over and over until 'xx' is found in the
+  output
+- `--norepaint` : Don't over-write the output from a previous command when
+  using `--untilgrep` - no cursor magic.
+- `--slowoutput` : When USESAVED is turned on, this will slow down the output
+  from the commands - otherwise it could be too fast for some demos
+- `--pausetime=xx` : when using `--untilgrep` you can exit the loop by pressing
+  any key. This wait `xx` seconds for a key before running the command again.
+  I usually use a sub-second value.
 
 Example: `doit echo hello world`
 <pre>
