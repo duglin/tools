@@ -75,7 +75,7 @@ Options:
 - `--slowoutput` : When USESAVED is turned on, this will slow down the output
   from the commands - otherwise it could be too fast for some demos
 - `--pausetime=xx` : when using `--untilgrep` you can exit the loop by pressing
-  any key. This wait `xx` seconds for a key before running the command again.
+  any key. This waits `xx` seconds for a key before running the command again.
   I usually use a sub-second value.
 
 Example: `doit echo hello world`
