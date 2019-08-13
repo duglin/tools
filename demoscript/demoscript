@@ -19,7 +19,7 @@ useSaved="$USESAVED"
 trap clean EXIT
 
 function clean {
-    rm -f out
+    rm -f out cmds
 }
 
 if [[ "${useSaved}" != "" && "${useSaved}" != "2" && ! -e "${saveTar}" ]]; then
