@@ -118,6 +118,7 @@ function doit() {
     local norepaint=""
     local slowoutput=""
     local showcmd=""
+    local doClear="${DOCLEAR:-}"
 
     while [[ "$1" == "--"* ]]; do
         opt="$1"
@@ -137,6 +138,8 @@ function doit() {
             --norepaint   ) norepaint="1"   ;;
             --slowoutput  ) slowoutput="1"  ;;
             --showcmd*    ) showcmd="${opt#*=}" ;;
+            --doclear     ) doClear="1"     ;;
+            --nodoclear   ) doClear=""     ;;
         esac
     done
 
@@ -303,6 +306,12 @@ function doit() {
     break
 
   done
+
+  if [[ -n "$doClear" ]]; then
+    echo -n $bold"$"$normal" "
+    pause
+    clear
+  fi
 }
 
 function background() {

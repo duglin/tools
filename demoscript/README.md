@@ -39,6 +39,8 @@ Set this environment variable to influence things...
   Which means it might not work properly if the a command requires a previous
   command to change something in the system - that change will not be there.
 - `RETRYONFAIL` : Retry all `doit` commands that have unexcepted exit code.
+- `DOCLEAR` : Clear the screen after each `doit` so that the next step will
+  be shown at the top of the screen. Good for demos.
 
 ## Demoing
 
@@ -77,6 +79,7 @@ Options:
 - `--pausetime=xx` : when using `--untilgrep` you can exit the loop by pressing
   any key. This waits `xx` seconds for a key before running the command again.
   I usually use a sub-second value.
+- `--doclear` : Clear the screen afterwards (`--nodoclear` to disable it)
 
 Example: `doit echo hello world`
 <pre>
