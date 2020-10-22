@@ -6,6 +6,9 @@
 # USESAVED=1  Use canned output instead of running the commands
 # USESAVED=2  Use canned output IFF it exists, otherwise run it
 
+# Macs are weird
+MORE=-e
+
 scriptName="${0##.*/}"
 bold=$(tput bold)
 normal=$(tput sgr0)
@@ -16,9 +19,9 @@ saveTar=$(cd $(dirname "$0");pwd)/${scriptName}.tar
 recover="$RECOVER"
 useSaved="$USESAVED"
 
-trap clean EXIT
+trap doit_clean EXIT
 
-function clean {
+function doit_clean {
     rm -f out cmds
 }
 
@@ -413,7 +416,7 @@ function comment() {
 }
 
 # Wait until the passed in cmd returns true
-function wait() {
+function waitfor() {
     # set -x
     if [[ "${useSaved}" != "" ]]; then
         return
