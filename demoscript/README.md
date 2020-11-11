@@ -54,7 +54,8 @@ as normal and hidden from the audience. Those are typically commands
 use to do setup and clean-up.
 
 We had to escape the `*` since `doit` is basically a wrapper and we don't
-want the expanion to happen until `doit` runs the command.
+want the expanion to happen until `doit` runs the command. You can get the
+same result by making it `doit 'tar -cf test.tar *'` if that's easier.
 
 Using `comment` instead of `echo` is optional, but it makes it bold and
 easier to see.
