@@ -97,7 +97,7 @@ Runs a command.
 - Pauses after the `$` (the prompt)
 - Pauses after showing the command
 - Shows the command in bold
-- Sends the output of the command through `more` - screen side is reduced by 3
+- Sends the output of the command through `more` - screen size is reduced by 3
 - Output of command (both stdout and stderr) are sent to a file called `out`.
   This file is erased when the bash script being executed exits.
 - A list of the commands executed will be saved in a file called `cmds`.
