@@ -152,7 +152,7 @@ function doit() {
     set +e
     echo -n $bold"$"$normal" "
     pause
-    slowType ${showcmd:-$*}
+    slowType "${showcmd:-$*}"
     echo "$*" >> cmds
     pause
     echo

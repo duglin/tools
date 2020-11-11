@@ -25,6 +25,44 @@ effect of typing. It'll:
 See `sample.sh` for an example of how it works.  Last example in there requires
 docker to be installed.
 
+Or a very short sample:
+Original code:
+```
+#!/bin/bash
+
+echo "This shows how to use 'tar'"
+tar -cf test.tar *
+tar -tf test.tar
+rm test.tar
+```
+
+Demoscript enabled:
+```
+#!/bin/bash
+
+source demoscript
+
+comment "This shows how to use 'tar'"
+doit tar -cf test.tar \*
+doit tar -tf test.tar
+doit rm test.tar
+```
+
+In the most basic case, just add `doit` before each command that you want
+to talk about with the audience. All non-doit commands are just executed
+as normal and hidden from the audience. Those are typically commands
+use to do setup and clean-up.
+
+We had to escape the `*` since `doit` is basically a wrapper and we don't
+want the expanion to happen until `doit` runs the command.
+
+Using `comment` instead of `echo` is optional, but it makes it bold and
+easier to see.
+
+Each command's output is sent to a file called "out" so that you can
+do some processing based on the previous comamnd's output - if needed.
+This means you don't need to add `2>&1 | tee out` to each `doit` command.
+
 ## Environment variables
 
 Set this environment variable to influence things...
