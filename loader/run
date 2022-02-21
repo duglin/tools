@@ -1,0 +1,19 @@
+#!/bin/bash
+
+delay=60
+
+while true ; do
+  date
+  echo kubectl run -ti loader$RANDOM --generator=run-pod/v1 --image duglin/loader --restart=Never --rm=true -- -c 700 -i 100 -m 700 -d 1 -t 15 http://echo.7bc3660e-1983.us-south.codeengine.appdomain.cloud
+  kubectl run -ti loader$RANDOM --generator=run-pod/v1 --image duglin/loader --restart=Never --rm=true -- -c 700 -i 100 -m 700 -d 1 -t 15 http://echo.7bc3660e-1983.us-south.codeengine.appdomain.cloud
+  (
+  echo Waiting for things to terminate...
+  export KUBECONFIG=/root/.bluemix/plugins/code-engine/demo-7bc3660e-1983-4b15-98c5-2e55785ca990.yaml
+  while kubectl get pods | grep echo > /dev/null 2>&1 ; do
+    sleep 1
+  done
+  )
+  echo sleeping $delay...
+  sleep $delay
+  (( delay = delay + 60 ))
+done

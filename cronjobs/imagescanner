@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# ic ce job create -n imagescanner --image ibmcom/ce-bash -cpu .125 -m 250M \
+#  --cmd /bin/bash --arg -c --arg "$(cat imagescanner)" -r 0
+# ic ce sub ping create -n imagescanner -s "0 * * * *" -d imagescanner -dt job
+
+SLACK="..."
+LOGDNA="..."
+REPORT=${REPORT}   # silly but a reminder of what env to use
+
+set -x
+
+curl -vf "http://imagescanner.cloud.ibm.com/scan?image=duglin/small"
+if [[ $? != "0" ]]; then
+  TITLE="Image scanner FAILED"
+  REPORT="1"
+else
+  TITLE="Image scanner PASSED"
+  (( `date +%H` == 0 )) && REPORT="1"   # once a day, report it no matter what
+fi
+
+LINKS=": <$LOGDNA|LogDNA>"
+SUMMARY=$(echo "$TITLE$LINKS" | jq -asR .)
+
+cat <<EOF >imagescanner.out
+{
+  "text": "$TITLE",
+  "blocks":[
+    { "type": "section",
+      "text": {
+        "type": "mrkdwn",
+        "text": $SUMMARY
+      }
+    }
+  ]
+}
+EOF
+
+set +x
+
+[[ -n $REPORT ]] && \
+  curl -w "%{http_code}\n" -fs $SLACK --data @imagescanner.out
+
+rm -f imagescanner.out
