@@ -10,7 +10,7 @@ REPORT=${REPORT}   # silly but a reminder of what env to use
 
 set -x
 
-curl -vf "http://imagescanner.cloud.ibm.com/scan?image=duglin/small"
+curl -vf "http://imagescanner.cloud.ibm.com/scan?image=icr.io/codeengine/small"
 if [[ $? != "0" ]]; then
   TITLE="Image scanner FAILED"
   REPORT="1"
