@@ -8,4 +8,4 @@ jobs:
   https:
     runs-on: ubuntu-latest
     steps:
-      - run: curl https://soaphub.org
+      - run: curl https://123.soaphub.org
