@@ -1,0 +1,10 @@
+name: "Check soaphub"
+on:
+  schedule:
+  - cron: "0 0 * * *"
+
+jobs:
+  https:
+    runs-on: ubuntu
+    steps:
+      - run: curl https://soaphub.org
