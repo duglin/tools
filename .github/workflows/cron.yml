@@ -1,11 +1,12 @@
 name: "Check soaphub"
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 jobs:
   https:
+    # Check to make sure the https cert is ok
     runs-on: ubuntu-latest
     steps:
-      - run: curl https://123.soaphub.org
+      - run: curl https://soaphub.org
