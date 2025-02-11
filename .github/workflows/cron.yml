@@ -6,6 +6,6 @@ on:
 
 jobs:
   https:
-    runs-on: ubuntu
+    runs-on: ubuntu-latest
     steps:
       - run: curl https://soaphub.org
