@@ -1,7 +1,7 @@
 name: "Check soaphub"
 on:
   schedule:
-    - cron: "0 * * * *"
+    - cron: "* */6 * * *"
     #        ^ ^ ^ ^ ^-- Day of week (0-6)
     #        | | | +- Month (1-12)
     #        | | +- Day of Month (1-31)
