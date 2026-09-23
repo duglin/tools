@@ -82,6 +82,10 @@ const loadBtn = document.getElementById('loadBtn');
 // Restore saved token (if any) so it can be added later without re-entering repos.
 tokenInput.value = localStorage.getItem('gh_token') || '';
 
+// Restore saved repo list (if any).
+const savedRepos = localStorage.getItem('repos');
+if (savedRepos !== null) reposInput.value = savedRepos;
+
 // Populate the 1-10 "workflows to pull" dropdown, restoring the saved choice (default 3).
 for (let i = 1; i <= 10; i++) {
   const opt = document.createElement('option');
@@ -201,6 +205,8 @@ async function loadAll() {
 
   const runCount = parseInt(runCountEl.value, 10) || 3;
   localStorage.setItem('run_count', runCount);
+
+  localStorage.setItem('repos', reposInput.value);
 
   const repos = reposInput.value
     .split('\n')
