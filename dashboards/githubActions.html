@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GitHub Actions Dashboard</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, Arial, sans-serif; margin: 2em; background: #f6f8fa; color: #24292f; font-size: 14px; }
+  h1 { font-size: 1.4em; }
+  .layout { display: flex; gap: 2em; align-items: flex-start; }
+  .sidebar { display: flex; flex-direction: column; gap: 1em; flex: 0 0 260px; }
+  .sidebar.collapsed { display: none; }
+  .sidebar textarea { width: 100%; height: 90px; font-family: monospace; box-sizing: border-box; }
+  .sidebar input[type=password] { width: 100%; box-sizing: border-box; }
+  .sidebar > div { display: flex; flex-direction: column; gap: 0.3em; }
+  .main { flex: 1; min-width: 0; }
+  .titlebar { display: flex; align-items: center; gap: 0.6em; margin-bottom: 1em; }
+  .titlebar h1 { margin: 0; }
+  #toggleSidebar { padding: 0.3em 0.6em; cursor: pointer; font-size: 1.1em; line-height: 1; }
+  button { align-self: flex-start; padding: 0.4em 1em; cursor: pointer; }
+  table { border-collapse: collapse; width: 100%; background: white; }
+  th, td { border: 1px solid #d0d7de; padding: 0.4em 0.7em; text-align: left; font-size: 0.9em; }
+  th { background: #eaeef2; }
+  th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+  th.sortable:hover { background: #d8dee4; }
+  th.sortable .arrow { color: #57606a; font-size: 0.85em; margin-left: 0.3em; }
+  .status-success { color: #1a7f37; font-weight: bold; }
+  .status-failure { color: #cf222e; font-weight: bold; }
+  .status-in_progress, .status-queued { color: #9a6700; font-weight: bold; }
+  .status-cancelled, .status-skipped { color: #57606a; }
+  .error { color: #cf222e; }
+  small { color: #57606a; }
+  .pr-title { display: inline-block; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
+  .status-link { color: inherit; text-decoration: none; }
+  .status-link:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="titlebar">
+  <button id="toggleSidebar">☰</button>
+  <h1>GitHub Actions Dashboard</h1>
+</div>
+
+<div class="layout">
+  <div class="sidebar" id="sidebar">
+    <div>
+      <label for="token">GitHub Token (optional, needed for private repos / higher rate limit)</label>
+      <input type="password" id="token" placeholder="ghp_...">
+    </div>
+    <div>
+      <label for="repos">Repos (one owner/repo per line)</label>
+      <textarea id="repos">Put org/repo here</textarea>
+    </div>
+    <div>
+      <label for="runCount">Workflows to pull per repo</label>
+      <select id="runCount"></select>
+    </div>
+    <div>
+      <button id="loadBtn">Load Runs</button>
+    </div>
+    <div>
+      <label><input type="checkbox" id="autoRefresh"> Auto-refresh (<span id="intervalLabel"></span>)</label>
+    </div>
+    <small>Token is stored only in this browser's localStorage and sent directly to api.github.com.
+    Unauthenticated requests are limited to 60/hour, so auto-refresh uses a longer interval without a token.</small>
+    <small id="countdown"></small>
+  </div>
+
+  <div class="main">
+    <div id="results"></div>
+  </div>
+</div>
+
+<script>
+const tokenInput = document.getElementById('token');
+const reposInput = document.getElementById('repos');
+const runCountEl = document.getElementById('runCount');
+const resultsEl = document.getElementById('results');
+const loadBtn = document.getElementById('loadBtn');
+
+// Restore saved token (if any) so it can be added later without re-entering repos.
+tokenInput.value = localStorage.getItem('gh_token') || '';
+
+// Populate the 1-10 "workflows to pull" dropdown, restoring the saved choice (default 3).
+for (let i = 1; i <= 10; i++) {
+  const opt = document.createElement('option');
+  opt.value = i;
+  opt.textContent = i;
+  runCountEl.appendChild(opt);
+}
+runCountEl.value = localStorage.getItem('run_count') || '3';
+
+// --- Sidebar toggle ---
+const sidebarEl = document.getElementById('sidebar');
+const toggleSidebarBtn = document.getElementById('toggleSidebar');
+
+function applySidebarState(collapsed) {
+  sidebarEl.classList.toggle('collapsed', collapsed);
+}
+
+applySidebarState(localStorage.getItem('sidebar_collapsed') === 'true');
+
+toggleSidebarBtn.addEventListener('click', () => {
+  const collapsed = !sidebarEl.classList.contains('collapsed');
+  applySidebarState(collapsed);
+  localStorage.setItem('sidebar_collapsed', collapsed);
+});
+
+let allRows = []; // flat list of run rows across all repos, for sorting
+
+function statusLabel(run) {
+  if (run.status !== 'completed') return run.status; // queued, in_progress, etc.
+  return run.conclusion || 'unknown';
+}
+
+function truncate(text, max = 40) {
+  if (!text) return '';
+  return text.length > max ? text.slice(0, max - 1) + '\u2026' : text;
+}
+
+const prTitleCache = new Map(); // "owner/repo#number" -> title
+const prLookupCache = new Map(); // "owner/repo/headOwner:branch" -> {number, title} or null
+
+async function fetchPrTitle(owner, repo, number, token) {
+  const key = `${owner}/${repo}#${number}`;
+  if (prTitleCache.has(key)) return prTitleCache.get(key);
+  const headers = { 'Accept': 'application/vnd.github+json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${owner}/${repo}/pulls/${number}`, { headers });
+    const title = resp.ok ? (await resp.json()).title : null;
+    prTitleCache.set(key, title);
+    return title;
+  } catch {
+    prTitleCache.set(key, null);
+    return null;
+  }
+}
+
+// GitHub only populates run.pull_requests for same-repo, non-fork PR events, so
+// fall back to searching open/closed PRs by head branch (using head_repository
+// to get the correct owner, which differs for PRs from forks).
+async function findPrForRun(owner, repo, run, token) {
+  const headOwner = run.head_repository?.owner?.login || owner;
+  const branch = run.head_branch;
+  if (!branch) return null;
+  const key = `${owner}/${repo}/${headOwner}:${branch}`;
+  if (prLookupCache.has(key)) return prLookupCache.get(key);
+  const headers = { 'Accept': 'application/vnd.github+json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  try {
+    const resp = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}/pulls?head=${headOwner}:${branch}&state=all&per_page=1`,
+      { headers }
+    );
+    const list = resp.ok ? await resp.json() : [];
+    const result = list.length > 0 ? { number: list[0].number, title: list[0].title } : null;
+    prLookupCache.set(key, result);
+    return result;
+  } catch {
+    prLookupCache.set(key, null);
+    return null;
+  }
+}
+
+async function prCellHtml(owner, repo, run, token) {
+  let number, title;
+  const prs = run.pull_requests || [];
+  if (prs.length > 0) {
+    number = prs[0].number;
+    title = await fetchPrTitle(owner, repo, number, token);
+  } else {
+    const found = await findPrForRun(owner, repo, run, token);
+    if (!found) return '';
+    number = found.number;
+    title = found.title;
+  }
+  const prUrl = `https://github.com/${owner}/${repo}/pull/${number}`;
+  const label = title ? `#${number} ${title}` : `#${number}`;
+  return ` - <a href="${prUrl}" target="_blank" class="pr-title" title="${label.replace(/"/g, '&quot;')}">${truncate(label)}</a>`;
+}
+
+async function fetchRuns(owner, repo, token, count) {
+  const headers = { 'Accept': 'application/vnd.github+json' };
+  if (token) headers['Authorization'] = 'Bearer ' + token;
+  const url = `https://api.github.com/repos/${owner}/${repo}/actions/runs?per_page=${count}`;
+  const resp = await fetch(url, { headers });
+  if (!resp.ok) {
+    const body = await resp.text();
+    throw new Error(`${resp.status} ${resp.statusText}: ${body.slice(0, 200)}`);
+  }
+  const data = await resp.json();
+  return data.workflow_runs || [];
+}
+
+async function loadAll() {
+  const token = tokenInput.value.trim();
+  if (token) localStorage.setItem('gh_token', token);
+  else localStorage.removeItem('gh_token');
+
+  const runCount = parseInt(runCountEl.value, 10) || 3;
+  localStorage.setItem('run_count', runCount);
+
+  const repos = reposInput.value
+    .split('\n')
+    .map(s => s.trim())
+    .filter(Boolean);
+
+  allRows = [];
+  const errors = [];
+
+  for (const full of repos) {
+    const [owner, repo] = full.split('/');
+
+    if (!owner || !repo) {
+      errors.push(`${full}: invalid entry, expected owner/repo`);
+      continue;
+    }
+
+    try {
+      const runs = await fetchRuns(owner, repo, token, runCount);
+      for (const run of runs) {
+        const st = statusLabel(run);
+        const prCell = await prCellHtml(owner, repo, run, token);
+        allRows.push({
+          repo: full,
+          workflow: run.name || run.workflow_id,
+          prHtml: prCell,
+          branch: run.head_branch,
+          status: st,
+          startedAt: new Date(run.created_at),
+          url: run.html_url,
+        });
+      }
+    } catch (err) {
+      errors.push(`${full}: ${err.message}`);
+    }
+  }
+
+  renderErrors(errors);
+  renderTable();
+}
+
+function renderErrors(errors) {
+  let box = document.getElementById('errors');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'errors';
+    resultsEl.insertAdjacentElement('beforebegin', box);
+  }
+  box.innerHTML = errors.map(e => `<div class="error">${e}</div>`).join('');
+}
+
+const COLUMNS = [
+  { key: 'repo', label: 'Repo' },
+  { key: 'workflow', label: 'Workflow' },
+  { key: 'branch', label: 'Branch' },
+  { key: 'status', label: 'Status' },
+  { key: 'startedAt', label: 'Started' },
+];
+
+let sortState = { key: 'startedAt', dir: 'desc' };
+
+function compareRows(a, b, key) {
+  let av = a[key], bv = b[key];
+  if (av instanceof Date) { av = av.getTime(); bv = bv.getTime(); }
+  else if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+  if (av < bv) return -1;
+  if (av > bv) return 1;
+  return 0;
+}
+
+function renderTable() {
+  resultsEl.innerHTML = '';
+  const table = document.createElement('table');
+
+  const headHtml = COLUMNS.map(col => {
+    if (col.sortable === false) return `<th>${col.label}</th>`;
+    const arrow = sortState.key === col.key ? (sortState.dir === 'asc' ? '\u25b2' : '\u25bc') : '';
+    return `<th class="sortable" data-key="${col.key}">${col.label}<span class="arrow">${arrow}</span></th>`;
+  }).join('');
+  table.innerHTML = `<thead><tr>${headHtml}</tr></thead><tbody></tbody>`;
+  resultsEl.appendChild(table);
+
+  table.querySelectorAll('th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.key;
+      if (sortState.key === key) {
+        sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortState = { key, dir: key === 'startedAt' ? 'desc' : 'asc' };
+      }
+      renderTable();
+    });
+  });
+
+  const tbody = table.querySelector('tbody');
+  if (allRows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="${COLUMNS.length}"><em>No workflow runs found</em></td></tr>`;
+    return;
+  }
+
+  const sorted = [...allRows].sort((a, b) => {
+    const cmp = compareRows(a, b, sortState.key);
+    return sortState.dir === 'asc' ? cmp : -cmp;
+  });
+
+  for (const row of sorted) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.repo}</td>
+      <td>${row.workflow}${row.prHtml}</td>
+      <td>${row.branch}</td>
+      <td class="status-${row.status}"><a href="${row.url}" target="_blank" class="status-link">${row.status}</a></td>
+      <td>${row.startedAt.toLocaleString()}</td>
+    `;
+    tbody.appendChild(tr);
+  }
+}
+
+loadBtn.addEventListener('click', loadAll);
+
+// --- Auto-refresh ---
+const AUTHED_INTERVAL_MS = 30 * 1000;       // 30s with a PAT (5,000 req/hr limit)
+const UNAUTHED_INTERVAL_MS = 3 * 60 * 1000; // 3 min without a PAT (60 req/hr limit)
+
+const autoRefreshEl = document.getElementById('autoRefresh');
+const intervalLabelEl = document.getElementById('intervalLabel');
+const countdownEl = document.getElementById('countdown');
+
+let refreshTimer = null;
+let countdownTimer = null;
+let secondsLeft = 0;
+
+function currentIntervalMs() {
+  return tokenInput.value.trim() ? AUTHED_INTERVAL_MS : UNAUTHED_INTERVAL_MS;
+}
+
+function updateIntervalLabel() {
+  const ms = currentIntervalMs();
+  intervalLabelEl.textContent = ms < 60000 ? `${ms / 1000}s` : `${ms / 60000}min`;
+}
+
+function stopAutoRefresh() {
+  clearInterval(refreshTimer);
+  clearInterval(countdownTimer);
+  refreshTimer = null;
+  countdownTimer = null;
+  countdownEl.textContent = '';
+}
+
+function startAutoRefresh() {
+  stopAutoRefresh();
+  updateIntervalLabel();
+  const intervalMs = currentIntervalMs();
+  secondsLeft = intervalMs / 1000;
+  countdownEl.textContent = `Next refresh in ${secondsLeft}s`;
+  countdownTimer = setInterval(() => {
+    secondsLeft--;
+    if (secondsLeft > 0) countdownEl.textContent = `Next refresh in ${secondsLeft}s`;
+  }, 1000);
+  refreshTimer = setInterval(async () => {
+    await loadAll();
+    secondsLeft = currentIntervalMs() / 1000;
+  }, intervalMs);
+}
+
+autoRefreshEl.addEventListener('change', () => {
+  if (autoRefreshEl.checked) {
+    loadAll().then(startAutoRefresh);
+  } else {
+    stopAutoRefresh();
+  }
+});
+
+// Restart the timer with the correct interval whenever the token is added/removed
+// while auto-refresh is on.
+tokenInput.addEventListener('change', () => {
+  updateIntervalLabel();
+  if (autoRefreshEl.checked) startAutoRefresh();
+});
+
+updateIntervalLabel();
+</script>
+</body>
+</html>
