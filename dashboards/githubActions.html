@@ -16,6 +16,8 @@
   .titlebar { display: flex; align-items: center; gap: 0.6em; margin-bottom: 1em; }
   .titlebar h1 { margin: 0; }
   #toggleSidebar { padding: 0.3em 0.6em; cursor: pointer; font-size: 1.1em; line-height: 1; }
+  #countdownBox { border: 1px solid #d0d7de; border-radius: 4px; padding: 0.2em 0.6em; font-family: monospace; font-size: 0.9em; color: #57606a; background: white; min-width: 2.5em; text-align: center; }
+  #countdownBox:empty { display: none; }
   button { align-self: flex-start; padding: 0.4em 1em; cursor: pointer; }
   table { border-collapse: collapse; width: 100%; background: white; }
   th, td { border: 1px solid #d0d7de; padding: 0.4em 0.7em; text-align: left; font-size: 0.9em; }
@@ -30,7 +32,7 @@
   .error { color: #cf222e; }
   small { color: #57606a; }
   .pr-title { display: inline-block; max-width: 220px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
-  .status-link { color: inherit; text-decoration: none; }
+  .status-link { color: inherit; text-decoration: underline; }
   .status-link:hover { text-decoration: underline; }
 </style>
 </head>
@@ -38,6 +40,7 @@
 <div class="titlebar">
   <button id="toggleSidebar">☰</button>
   <h1>GitHub Actions Dashboard</h1>
+  <span id="countdownBox"></span>
 </div>
 
 <div class="layout">
@@ -62,7 +65,6 @@
     </div>
     <small>Token is stored only in this browser's localStorage and sent directly to api.github.com.
     Unauthenticated requests are limited to 60/hour, so auto-refresh uses a longer interval without a token.</small>
-    <small id="countdown"></small>
   </div>
 
   <div class="main">
@@ -325,7 +327,7 @@ const UNAUTHED_INTERVAL_MS = 3 * 60 * 1000; // 3 min without a PAT (60 req/hr li
 
 const autoRefreshEl = document.getElementById('autoRefresh');
 const intervalLabelEl = document.getElementById('intervalLabel');
-const countdownEl = document.getElementById('countdown');
+const countdownEl = document.getElementById('countdownBox');
 
 let refreshTimer = null;
 let countdownTimer = null;
@@ -353,10 +355,10 @@ function startAutoRefresh() {
   updateIntervalLabel();
   const intervalMs = currentIntervalMs();
   secondsLeft = intervalMs / 1000;
-  countdownEl.textContent = `Next refresh in ${secondsLeft}s`;
+  countdownEl.textContent = `${secondsLeft}s`;
   countdownTimer = setInterval(() => {
     secondsLeft--;
-    if (secondsLeft > 0) countdownEl.textContent = `Next refresh in ${secondsLeft}s`;
+    if (secondsLeft > 0) countdownEl.textContent = `${secondsLeft}s`;
   }, 1000);
   refreshTimer = setInterval(async () => {
     await loadAll();
