@@ -16,8 +16,22 @@
   .titlebar { display: flex; align-items: center; gap: 0.6em; margin-bottom: 1em; }
   .titlebar h1 { margin: 0; }
   #toggleSidebar { padding: 0.3em 0.6em; cursor: pointer; font-size: 1.1em; line-height: 1; }
-  #countdownBox { border: 1px solid #d0d7de; border-radius: 4px; padding: 0.2em 0.6em; font-family: monospace; font-size: 0.9em; color: #57606a; background: white; min-width: 2.5em; text-align: center; }
-  #countdownBox:empty { display: none; }
+  #refreshBtn {
+    position: relative; width: 2.4em; height: 2.4em; border-radius: 50%;
+    border: 2px solid #57606a; background: white; color: #57606a;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; padding: 0; flex: none; align-self: center;
+  }
+  #refreshBtn:hover { background: #eaeef2; }
+  #refreshBtn .refresh-icon {
+    position: absolute; font-size: 3em; line-height: 1; opacity: 1; transition: opacity 0.15s;
+    padding-bottom: 10px; padding-left: 3px;
+  }
+  #refreshBtn .refresh-count { position: relative; font-family: monospace; font-size: 0.75em; font-weight: 700; opacity: 0; transition: opacity 0.15s; }
+  #refreshBtn.counting .refresh-icon { opacity: 0.25; }
+  #refreshBtn.counting .refresh-count { opacity: 1; }
+  #refreshBtn.spinning .refresh-icon { animation: spin 0.6s linear; }
+  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
   button { align-self: flex-start; padding: 0.4em 1em; cursor: pointer; }
   table { border-collapse: collapse; width: 100%; background: white; }
   th, td { border: 1px solid #d0d7de; padding: 0.4em 0.7em; text-align: left; font-size: 0.9em; }
@@ -40,7 +54,10 @@
 <div class="titlebar">
   <button id="toggleSidebar">☰</button>
   <h1>GitHub Actions Dashboard</h1>
-  <span id="countdownBox"></span>
+  <button id="refreshBtn" title="Refresh now">
+    <span class="refresh-icon">⟳</span>
+    <span class="refresh-count"></span>
+  </button>
 </div>
 
 <div class="layout">
@@ -58,10 +75,18 @@
       <select id="runCount"></select>
     </div>
     <div>
-      <button id="loadBtn">Load Runs</button>
+      <label for="refreshInterval">Refresh interval</label>
+      <select id="refreshInterval">
+        <option value="30">30s</option>
+        <option value="60">1m</option>
+        <option value="120">2m</option>
+        <option value="180">3m</option>
+        <option value="300">5m</option>
+        <option value="600">10m</option>
+      </select>
     </div>
     <div>
-      <label><input type="checkbox" id="autoRefresh"> Auto-refresh (<span id="intervalLabel"></span>)</label>
+      <label><input type="checkbox" id="autoRefresh"> Auto-refresh</label>
     </div>
     <small>Token is stored only in this browser's localStorage and sent directly to api.github.com.
     Unauthenticated requests are limited to 60/hour, so auto-refresh uses a longer interval without a token.</small>
@@ -77,7 +102,6 @@ const tokenInput = document.getElementById('token');
 const reposInput = document.getElementById('repos');
 const runCountEl = document.getElementById('runCount');
 const resultsEl = document.getElementById('results');
-const loadBtn = document.getElementById('loadBtn');
 
 // Restore saved token (if any) so it can be added later without re-entering repos.
 tokenInput.value = localStorage.getItem('gh_token') || '';
@@ -325,27 +349,26 @@ function renderTable() {
   }
 }
 
-loadBtn.addEventListener('click', loadAll);
-
-// --- Auto-refresh ---
-const AUTHED_INTERVAL_MS = 30 * 1000;       // 30s with a PAT (5,000 req/hr limit)
-const UNAUTHED_INTERVAL_MS = 3 * 60 * 1000; // 3 min without a PAT (60 req/hr limit)
-
+// --- Refresh button (also doubles as the auto-refresh countdown) ---
+const refreshBtn = document.getElementById('refreshBtn');
+const refreshCountEl = refreshBtn.querySelector('.refresh-count');
 const autoRefreshEl = document.getElementById('autoRefresh');
-const intervalLabelEl = document.getElementById('intervalLabel');
-const countdownEl = document.getElementById('countdownBox');
+const refreshIntervalEl = document.getElementById('refreshInterval');
+
+// Restore saved interval choice, defaulting to 30s with a token (5,000 req/hr
+// limit) or 3min without one (60 req/hr limit).
+const savedInterval = localStorage.getItem('refresh_interval_s');
+refreshIntervalEl.value = savedInterval || (tokenInput.value.trim() ? '30' : '180');
+
+// Restore saved auto-refresh toggle state.
+autoRefreshEl.checked = localStorage.getItem('auto_refresh') === 'true';
 
 let refreshTimer = null;
 let countdownTimer = null;
 let secondsLeft = 0;
 
 function currentIntervalMs() {
-  return tokenInput.value.trim() ? AUTHED_INTERVAL_MS : UNAUTHED_INTERVAL_MS;
-}
-
-function updateIntervalLabel() {
-  const ms = currentIntervalMs();
-  intervalLabelEl.textContent = ms < 60000 ? `${ms / 1000}s` : `${ms / 60000}min`;
+  return parseInt(refreshIntervalEl.value, 10) * 1000;
 }
 
 function stopAutoRefresh() {
@@ -353,26 +376,37 @@ function stopAutoRefresh() {
   clearInterval(countdownTimer);
   refreshTimer = null;
   countdownTimer = null;
-  countdownEl.textContent = '';
+  refreshBtn.classList.remove('counting');
+  refreshCountEl.textContent = '';
 }
 
 function startAutoRefresh() {
   stopAutoRefresh();
-  updateIntervalLabel();
   const intervalMs = currentIntervalMs();
   secondsLeft = intervalMs / 1000;
-  countdownEl.textContent = `${secondsLeft}s`;
+  refreshBtn.classList.add('counting');
+  refreshCountEl.textContent = secondsLeft;
   countdownTimer = setInterval(() => {
     secondsLeft--;
-    if (secondsLeft > 0) countdownEl.textContent = `${secondsLeft}s`;
+    if (secondsLeft > 0) refreshCountEl.textContent = secondsLeft;
   }, 1000);
   refreshTimer = setInterval(async () => {
     await loadAll();
     secondsLeft = currentIntervalMs() / 1000;
+    refreshCountEl.textContent = secondsLeft;
   }, intervalMs);
 }
 
+refreshBtn.addEventListener('click', () => {
+  refreshBtn.classList.add('spinning');
+  setTimeout(() => refreshBtn.classList.remove('spinning'), 600);
+  loadAll().then(() => {
+    if (autoRefreshEl.checked) startAutoRefresh(); // manual refresh resets the countdown
+  });
+});
+
 autoRefreshEl.addEventListener('change', () => {
+  localStorage.setItem('auto_refresh', autoRefreshEl.checked);
   if (autoRefreshEl.checked) {
     loadAll().then(startAutoRefresh);
   } else {
@@ -380,14 +414,16 @@ autoRefreshEl.addEventListener('change', () => {
   }
 });
 
-// Restart the timer with the correct interval whenever the token is added/removed
-// while auto-refresh is on.
-tokenInput.addEventListener('change', () => {
-  updateIntervalLabel();
+// If auto-refresh was left on from a previous session, resume it on load
+// (this also triggers the initial data load).
+if (autoRefreshEl.checked) {
+  loadAll().then(startAutoRefresh);
+}
+
+refreshIntervalEl.addEventListener('change', () => {
+  localStorage.setItem('refresh_interval_s', refreshIntervalEl.value);
   if (autoRefreshEl.checked) startAutoRefresh();
 });
-
-updateIntervalLabel();
 </script>
 </body>
 </html>
