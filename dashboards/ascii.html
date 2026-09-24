@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ASCII Table</title>
+    <style>
+        body {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 13px;
+            color: #000000;
+            background-color: #ffffff;
+            margin: 20px;
+        }
+        .ascii-container {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+        }
+        table {
+            border-collapse: collapse;
+            margin: 0;
+            padding: 0;
+        }
+        table:not(:last-child) {
+            border-right: 1px solid #000000;
+            margin-right: 10px;
+            padding-right: 10px;
+        }
+        th {
+            font-weight: normal;
+            border-bottom: 1px solid #000000;
+            padding: 2px 4px 4px 4px;
+            text-align: left;
+            white-space: pre;
+        }
+        td {
+            padding: 1px 4px;
+            white-space: pre;
+        }
+        .red {
+            color: #cc0000;
+        }
+    </style>
+</head>
+<body>
+
+<div class="ascii-container">
+
+    <!-- Column 1: 0 - 31 -->
+    <table>
+        <thead><tr><th>Dec Hx Oct Char</th></tr></thead>
+        <tbody>
+            <tr><td>  0  0 000 <span class="red">NUL</span> (null)</td></tr>
+            <tr><td>  1  1 001 <span class="red">SOH</span> (start of heading)</td></tr>
+            <tr><td>  2  2 002 <span class="red">STX</span> (start of text)</td></tr>
+            <tr><td>  3  3 003 <span class="red">ETX</span> (end of text)</td></tr>
+            <tr><td>  4  4 004 <span class="red">EOT</span> (end of transmission)</td></tr>
+            <tr><td>  5  5 005 <span class="red">ENQ</span> (enquiry)</td></tr>
+            <tr><td>  6  6 006 <span class="red">ACK</span> (acknowledge)</td></tr>
+            <tr><td>  7  7 007 <span class="red">BEL</span> (bell)</td></tr>
+            <tr><td>  8  8 010 <span class="red">BS </span> (backspace)</td></tr>
+            <tr><td>  9  9 011 <span class="red">TAB</span> (horizontal tab)</td></tr>
+            <tr><td> 10  A 012 <span class="red">LF </span> (NL line feed, new line)</td></tr>
+            <tr><td> 11  B 013 <span class="red">VT </span> (vertical tab)</td></tr>
+            <tr><td> 12  C 014 <span class="red">FF </span> (NP form feed, new page)</td></tr>
+            <tr><td> 13  D 015 <span class="red">CR </span> (carriage return)</td></tr>
+            <tr><td> 14  E 016 <span class="red">SO </span> (shift out)</td></tr>
+            <tr><td> 15  F 017 <span class="red">SI </span> (shift in)</td></tr>
+            <tr><td> 16 10 020 <span class="red">DLE</span> (data link escape)</td></tr>
+            <tr><td> 17 11 021 <span class="red">DC1</span> (device control 1)</td></tr>
+            <tr><td> 18 12 022 <span class="red">DC2</span> (device control 2)</td></tr>
+            <tr><td> 19 13 023 <span class="red">DC3</span> (device control 3)</td></tr>
+            <tr><td> 20 14 024 <span class="red">DC4</span> (device control 4)</td></tr>
+            <tr><td> 21 15 025 <span class="red">NAK</span> (negative acknowledge)</td></tr>
+            <tr><td> 22 16 026 <span class="red">SYN</span> (synchronous idle)</td></tr>
+            <tr><td> 23 17 027 <span class="red">ETB</span> (end of trans. block)</td></tr>
+            <tr><td> 24 18 030 <span class="red">CAN</span> (cancel)</td></tr>
+            <tr><td> 25 19 031 <span class="red">EM </span> (end of medium)</td></tr>
+            <tr><td> 26 1A 032 <span class="red">SUB</span> (substitute)</td></tr>
+            <tr><td> 27 1B 033 <span class="red">ESC</span> (escape)</td></tr>
+            <tr><td> 28 1C 034 <span class="red">FS </span> (file separator)</td></tr>
+            <tr><td> 29 1D 035 <span class="red">GS </span> (group separator)</td></tr>
+            <tr><td> 30 1E 036 <span class="red">RS </span> (record separator)</td></tr>
+            <tr><td> 31 1F 037 <span class="red">US </span> (unit separator)</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Column 2: 32 - 63 -->
+    <table>
+        <thead><tr><th>Dec Hx Oct Html Chr</th></tr></thead>
+        <tbody>
+            <tr><td> 32 20 040 &amp;#32; <span class="red">Space</span></td></tr>
+            <tr><td> 33 21 041 &amp;#33; <span class="red">!</span></td></tr>
+            <tr><td> 34 22 042 &amp;#34; <span class="red">"</span></td></tr>
+            <tr><td> 35 23 043 &amp;#35; <span class="red">#</span></td></tr>
+            <tr><td> 36 24 044 &amp;#36; <span class="red">$</span></td></tr>
+            <tr><td> 37 25 045 &amp;#37; <span class="red">%</span></td></tr>
+            <tr><td> 38 26 046 &amp;#38; <span class="red">&amp;</span></td></tr>
+            <tr><td> 39 27 047 &amp;#39; <span class="red">'</span></td></tr>
+            <tr><td> 40 28 050 &amp;#40; <span class="red">(</span></td></tr>
+            <tr><td> 41 29 051 &amp;#41; <span class="red">)</span></td></tr>
+            <tr><td> 42 2A 052 &amp;#42; <span class="red">*</span></td></tr>
+            <tr><td> 43 2B 053 &amp;#43; <span class="red">+</span></td></tr>
+            <tr><td> 44 2C 054 &amp;#44; <span class="red">,</span></td></tr>
+            <tr><td> 45 2D 055 &amp;#45; <span class="red">-</span></td></tr>
+            <tr><td> 46 2E 056 &amp;#46; <span class="red">.</span></td></tr>
+            <tr><td> 47 2F 057 &amp;#47; <span class="red">/</span></td></tr>
+            <tr><td> 48 30 060 &amp;#48; <span class="red">0</span></td></tr>
+            <tr><td> 49 31 061 &amp;#49; <span class="red">1</span></td></tr>
+            <tr><td> 50 32 062 &amp;#50; <span class="red">2</span></td></tr>
+            <tr><td> 51 33 063 &amp;#51; <span class="red">3</span></td></tr>
+            <tr><td> 52 34 064 &amp;#52; <span class="red">4</span></td></tr>
+            <tr><td> 53 35 065 &amp;#53; <span class="red">5</span></td></tr>
+            <tr><td> 54 36 066 &amp;#54; <span class="red">6</span></td></tr>
+            <tr><td> 55 37 067 &amp;#55; <span class="red">7</span></td></tr>
+            <tr><td> 56 38 070 &amp;#56; <span class="red">8</span></td></tr>
+            <tr><td> 57 39 071 &amp;#57; <span class="red">9</span></td></tr>
+            <tr><td> 58 3A 072 &amp;#58; <span class="red">:</span></td></tr>
+            <tr><td> 59 3B 073 &amp;#59; <span class="red">;</span></td></tr>
+            <tr><td> 60 3C 074 &amp;#60; <span class="red">&lt;</span></td></tr>
+            <tr><td> 61 3D 075 &amp;#61; <span class="red">=</span></td></tr>
+            <tr><td> 62 3E 076 &amp;#62; <span class="red">&gt;</span></td></tr>
+            <tr><td> 63 3F 077 &amp;#63; <span class="red">?</span></td></tr>
+        </tbody>
+    </table>
+
+    <!-- Column 3: 64 - 95 -->
+    <table>
+        <thead><tr><th>Dec Hx Oct Html Chr</th></tr></thead>
+        <tbody>
+            <tr><td> 64 40 100 &amp;#64; <span class="red">@</span></td></tr>
+            <tr><td> 65 41 101 &amp;#65; <span class="red">A</span></td></tr>
+            <tr><td> 66 42 102 &amp;#66; <span class="red">B</span></td></tr>
+            <tr><td> 67 43 103 &amp;#67; <span class="red">C</span></td></tr>
+            <tr><td> 68 44 104 &amp;#68; <span class="red">D</span></td></tr>
+            <tr><td> 69 45 105 &amp;#69; <span class="red">E</span></td></tr>
+            <tr><td> 70 46 106 &amp;#70; <span class="red">F</span></td></tr>
+            <tr><td> 71 47 107 &amp;#71; <span class="red">G</span></td></tr>
+            <tr><td> 72 48 110 &amp;#72; <span class="red">H</span></td></tr>
+            <tr><td> 73 49 111 &amp;#73; <span class="red">I</span></td></tr>
+            <tr><td> 74 4A 112 &amp;#74; <span class="red">J</span></td></tr>
+            <tr><td> 75 4B 113 &amp;#75; <span class="red">K</span></td></tr>
+            <tr><td> 76 4C 114 &amp;#76; <span class="red">L</span></td></tr>
+            <tr><td> 77 4D 115 &amp;#77; <span class="red">M</span></td></tr>
+            <tr><td> 78 4E 116 &amp;#78; <span class="red">N</span></td></tr>
+            <tr><td> 79 4F 117 &amp;#79; <span class="red">O</span></td></tr>
+            <tr><td> 80 50 120 &amp;#80; <span class="red">P</span></td></tr>
+            <tr><td> 81 51 121 &amp;#81; <span class="red">Q</span></td></tr>
+            <tr><td> 82 52 122 &amp;#82; <span class="red">R</span></td></tr>
+            <tr><td> 83 53 123 &amp;#83; <span class="red">S</span></td></tr>
+            <tr><td> 84 54 124 &amp;#84; <span class="red">T</span></td></tr>
+            <tr><td> 85 55 125 &amp;#85; <span class="red">U</span></td></tr>
+            <tr><td> 86 56 126 &amp;#86; <span class="red">V</span></td></tr>
+            <tr><td> 87 57 127 &amp;#87; <span class="red">W</span></td></tr>
+            <tr><td> 88 58 130 &amp;#88; <span class="red">X</span></td></tr>
+            <tr><td> 89 59 131 &amp;#89; <span class="red">Y</span></td></tr>
+            <tr><td> 90 5A 132 &amp;#90; <span class="red">Z</span></td></tr>
+            <tr><td> 91 5B 133 &amp;#91; <span class="red">[</span></td></tr>
+            <tr><td> 92 5C 134 &amp;#92; <span class="red">\</span></td></tr>
+            <tr><td> 93 5D 135 &amp;#93; <span class="red">]</span></td></tr>
+            <tr><td> 94 5E 136 &amp;#94; <span class="red">^</span></td></tr>
+            <tr><td> 95 5F 137 &amp;#95; <span class="red">_</span></td></tr>
+        </tbody>
+    </table>
+
+    <!-- Column 4: 96 - 127 -->
+    <table>
+        <thead><tr><th>Dec Hx Oct Html Chr</th></tr></thead>
+        <tbody>
+            <tr><td> 96 60 140 &amp;#96;  <span class="red">`</span></td></tr>
+            <tr><td> 97 61 141 &amp;#97;  <span class="red">a</span></td></tr>
+            <tr><td> 98 62 142 &amp;#98;  <span class="red">b</span></td></tr>
+            <tr><td> 99 63 143 &amp;#99;  <span class="red">c</span></td></tr>
+            <tr><td>100 64 144 &amp;#100; <span class="red">d</span></td></tr>
+            <tr><td>101 65 145 &amp;#101; <span class="red">e</span></td></tr>
+            <tr><td>102 66 146 &amp;#102; <span class="red">f</span></td></tr>
+            <tr><td>103 67 147 &amp;#103; <span class="red">g</span></td></tr>
+            <tr><td>104 68 150 &amp;#104; <span class="red">h</span></td></tr>
+            <tr><td>105 69 151 &amp;#105; <span class="red">i</span></td></tr>
+            <tr><td>106 6A 152 &amp;#106; <span class="red">j</span></td></tr>
+            <tr><td>107 6B 153 &amp;#107; <span class="red">k</span></td></tr>
+            <tr><td>108 6C 154 &amp;#108; <span class="red">l</span></td></tr>
+            <tr><td>109 6D 155 &amp;#109; <span class="red">m</span></td></tr>
+            <tr><td>110 6E 156 &amp;#110; <span class="red">n</span></td></tr>
+            <tr><td>111 6F 157 &amp;#111; <span class="red">o</span></td></tr>
+            <tr><td>112 70 160 &amp;#112; <span class="red">p</span></td></tr>
+            <tr><td>113 71 161 &amp;#113; <span class="red">q</span></td></tr>
+            <tr><td>114 72 162 &amp;#114; <span class="red">r</span></td></tr>
+            <tr><td>115 73 163 &amp;#115; <span class="red">s</span></td></tr>
+            <tr><td>116 74 164 &amp;#116; <span class="red">t</span></td></tr>
+            <tr><td>117 75 165 &amp;#117; <span class="red">u</span></td></tr>
+            <tr><td>118 76 166 &amp;#118; <span class="red">v</span></td></tr>
+            <tr><td>119 77 167 &amp;#119; <span class="red">w</span></td></tr>
+            <tr><td>120 78 170 &amp;#120; <span class="red">x</span></td></tr>
+            <tr><td>121 79 171 &amp;#121; <span class="red">y</span></td></tr>
+            <tr><td>122 7A 172 &amp;#122; <span class="red">z</span></td></tr>
+            <tr><td>123 7B 173 &amp;#123; <span class="red">{</span></td></tr>
+            <tr><td>124 7C 174 &amp;#124; <span class="red">|</span></td></tr>
+            <tr><td>125 7D 175 &amp;#125; <span class="red">}</span></td></tr>
+            <tr><td>126 7E 176 &amp;#126; <span class="red">~</span></td></tr>
+            <tr><td>127 7F 177 &amp;#127; <span class="red">DEL</span></td></tr>
+        </tbody>
+    </table>
+
+</div>
+
+</body>
+</html>
+
